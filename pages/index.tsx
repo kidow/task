@@ -96,7 +96,9 @@ const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
     if (!title) return
     setState({ isCreating: true })
     try {
-      await supabase.from<Table.Tasks>('tasks').insert({ title, description })
+      await supabase
+        .from<Table.Tasks>('tasks')
+        .insert({ title, description, is_resolved: false })
       setState({ title: '', description: '' })
       get()
     } catch (err) {
