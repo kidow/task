@@ -202,7 +202,7 @@ const HomePage: NextPage<Props> = ({ user }) => {
               name="title"
               disabled={!isLoggedIn}
               autoFocus
-              placeholder="오늘 추가할 태스크는..."
+              placeholder="오늘 해야할 태스크는..."
               onChange={onChange}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') create()
