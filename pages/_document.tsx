@@ -15,7 +15,7 @@ export default class MyDocument extends Document {
       <Html lang="ko" dir="ltr">
         <Head>
           <meta charSet="utf-8" />
-          <meta name="theme-color" content="#475569" />
+          <meta name="theme-color" content="#262626" />
           <meta name="robots" content="noindex, nofollow" />
           <link rel="manifest" href="/manifest.json" />
           <link
@@ -35,7 +35,7 @@ export default class MyDocument extends Document {
             type="text/css"
             href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
           />
-          <meta name="msapplicatqion-TileColor" content="#475569" />
+          <meta name="msapplicatqion-TileColor" content="#262626" />
         </Head>
         <body>
           <Main />
