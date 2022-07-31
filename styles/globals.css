@@ -7,9 +7,21 @@
     Pretendard, Roboto, 'Noto Sans KR', 'Segoe UI', 'Malgun Gothic', sans-serif;
 }
 
-html,
-body {
-  @apply bg-neutral-900 text-neutral-50;
+@layer base {
+  html,
+  body {
+    @apply bg-neutral-900 text-neutral-50;
+  }
+
+  input,
+  textarea,
+  button {
+    @apply focus:outline-none;
+  }
+
+  textarea {
+    @apply resize-none;
+  }
 }
 
 @layer components {
