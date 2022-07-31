@@ -53,3 +53,12 @@ export function useObjectState<T>(
 
   return [state, onChange, onEventChange, resetState]
 }
+
+export const useComponentDidUpdate = (cb: Function, state: any) => {
+  const mounted = useRef(false)
+
+  useEffect(() => {
+    if (mounted.current) cb()
+    else mounted.current = true
+  }, state)
+}
