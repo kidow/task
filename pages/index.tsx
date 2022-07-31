@@ -1,4 +1,4 @@
-import type { NextPage } from 'next'
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import {
   ChevronDoubleLeftIcon,
   ChevronLeftIcon,
@@ -12,6 +12,8 @@ import { supabase, useObjectState } from 'services'
 import { Item, SEO, Spinner } from 'components'
 import { Modal } from 'containers'
 import { useEffect } from 'react'
+import cookie from 'cookie'
+import type { User } from '@supabase/supabase-js'
 
 interface State {
   isCalendarOpen: boolean
@@ -21,9 +23,14 @@ interface State {
   currentDate: string
   list: Table.Tasks[]
   isLoading: boolean
+  isLoggedIn: boolean
 }
 
-const HomePage: NextPage = () => {
+const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
+  user
+}: {
+  user: User | null
+}) => {
   const [
     {
       isCalendarOpen,
@@ -32,7 +39,8 @@ const HomePage: NextPage = () => {
       description,
       currentDate,
       list,
-      isLoading
+      isLoading,
+      isLoggedIn
     },
     setState,
     onChange
@@ -43,7 +51,8 @@ const HomePage: NextPage = () => {
     description: '',
     currentDate: dayjs().format('YYYY-MM-DD'),
     list: [],
-    isLoading: true
+    isLoading: true,
+    isLoggedIn: false
   })
 
   const get = async () => {
@@ -100,11 +109,25 @@ const HomePage: NextPage = () => {
   useEffect(() => {
     get()
   }, [currentDate])
+
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        cookie.serialize('access_token', session.access_token)
+        if (session.user?.email === process.env.NEXT_PUBLIC_EMAIL)
+          setState({ isLoggedIn: true })
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!!user) setState({ isLoggedIn: true })
+  }, [user])
   return (
     <>
       <SEO title="Task" />
       <div className="container mx-auto max-w-lg px-4 sm:px-0">
-        <div className="mt-10 flex items-center gap-1">
+        <div className="mt-6 flex items-center gap-1">
           <button
             disabled={isLoading}
             className="chevron-button"
@@ -153,7 +176,7 @@ const HomePage: NextPage = () => {
             <ChevronRightIcon />
           </button>
           <button
-            disabled={isLoading}
+            disabled={dayjs().format('YYYY-MM-DD') === currentDate || isLoading}
             onClick={() =>
               setState({
                 currentDate: dayjs(currentDate)
@@ -176,6 +199,7 @@ const HomePage: NextPage = () => {
               className="w-full flex-1 bg-transparent placeholder:italic"
               spellCheck={false}
               name="title"
+              disabled={!isLoggedIn}
               autoFocus
               placeholder="오늘 추가할 태스크는..."
               onChange={onChange}
@@ -212,11 +236,26 @@ const HomePage: NextPage = () => {
           ))}
         </div>
 
-        <div className="fixed bottom-0 left-1/2 w-full -translate-x-1/2 text-center">
-          <button onClick={() => supabase.auth.signIn({ provider: 'google' })}>
-            구글로 로그인
-          </button>
-        </div>
+        {!isLoggedIn && (
+          <div className="fixed bottom-0 left-1/2 w-full -translate-x-1/2 py-4 text-center">
+            <button
+              onClick={() =>
+                supabase.auth.signIn(
+                  { provider: 'google' },
+                  {
+                    redirectTo:
+                      process.env.NODE_ENV === 'development'
+                        ? 'http://localhost:3000'
+                        : 'https://task.kidow.me',
+                    shouldCreateUser: false
+                  }
+                )
+              }
+            >
+              구글로 로그인
+            </button>
+          </div>
+        )}
       </div>
 
       <Modal.Calendar
@@ -225,6 +264,13 @@ const HomePage: NextPage = () => {
       />
     </>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+  const { user } = await supabase.auth.api.getUser(
+    cookie.parse(req?.headers.cookie || '')?.access_token || ''
+  )
+  return { props: { user } }
 }
 
 export default HomePage
