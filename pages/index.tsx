@@ -93,7 +93,7 @@ const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
   }
 
   const create = async () => {
-    if (!title) return
+    if (!title || isCreating) return
     setState({ isCreating: true })
     try {
       await supabase
