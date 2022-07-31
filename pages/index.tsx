@@ -1,4 +1,4 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
+import type { NextPage } from 'next'
 import {
   ChevronDoubleLeftIcon,
   ChevronLeftIcon,
@@ -12,9 +12,12 @@ import { supabase, useObjectState } from 'services'
 import { Item, SEO, Spinner } from 'components'
 import { Modal } from 'containers'
 import { useEffect } from 'react'
-import cookie from 'cookie'
 import type { User } from '@supabase/supabase-js'
+import jsCookie from 'js-cookie'
 
+interface Props {
+  user: User | null
+}
 interface State {
   isCalendarOpen: boolean
   title: string
@@ -26,11 +29,7 @@ interface State {
   isLoggedIn: boolean
 }
 
-const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
-  user
-}: {
-  user: User | null
-}) => {
+const HomePage: NextPage<Props> = ({ user }) => {
   const [
     {
       isCalendarOpen,
@@ -115,7 +114,7 @@ const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        cookie.serialize('access_token', session.access_token)
+        jsCookie.set('access_token', session.access_token)
         if (session.user?.email === process.env.NEXT_PUBLIC_EMAIL)
           setState({ isLoggedIn: true })
       }
@@ -266,13 +265,6 @@ const HomePage: InferGetServerSidePropsType<typeof getServerSideProps> = ({
       />
     </>
   )
-}
-
-export const getServerSideProps: GetServerSideProps = async ({ req }) => {
-  const { user } = await supabase.auth.api.getUser(
-    cookie.parse(req?.headers.cookie || '')?.access_token || ''
-  )
-  return { props: { user } }
 }
 
 export default HomePage
