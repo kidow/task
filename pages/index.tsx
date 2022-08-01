@@ -212,7 +212,7 @@ const HomePage: NextPage<Props> = ({ user }) => {
               <Spinner className="h-5 w-5" />
             ) : (
               !!title && (
-                <button onClick={create}>
+                <button tabIndex={-1} onClick={create}>
                   <PencilAltIcon className="h-5 w-5 text-neutral-600 hover:text-neutral-50 active:text-neutral-400" />
                 </button>
               )
@@ -233,7 +233,12 @@ const HomePage: NextPage<Props> = ({ user }) => {
 
         <div className="mt-10 divide-y divide-neutral-700">
           {list.map((item) => (
-            <Item key={item.id} onUpdate={get} {...item} />
+            <Item
+              key={item.id}
+              onUpdate={get}
+              isLoggedIn={isLoggedIn}
+              {...item}
+            />
           ))}
         </div>
 

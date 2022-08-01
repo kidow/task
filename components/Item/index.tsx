@@ -1,10 +1,12 @@
-import type { FC } from 'react'
+import type { FC, MouseEventHandler } from 'react'
 import classnames from 'classnames'
 import { supabase, useComponentDidUpdate, useObjectState } from 'services'
 import { DebounceInput } from 'react-debounce-input'
+import { XIcon } from '@heroicons/react/outline'
 
 export interface Props extends Table.Tasks {
   onUpdate: () => void
+  isLoggedIn: boolean
 }
 interface State {
   isOpen: boolean
@@ -12,7 +14,13 @@ interface State {
   description: string
 }
 
-const Item: FC<Props> = ({ is_resolved, onUpdate, id, ...props }) => {
+const Item: FC<Props> = ({
+  is_resolved,
+  onUpdate,
+  id,
+  isLoggedIn,
+  ...props
+}) => {
   const [{ isOpen, description, title }, setState, onChange] =
     useObjectState<State>({
       isOpen: false,
@@ -32,7 +40,19 @@ const Item: FC<Props> = ({ is_resolved, onUpdate, id, ...props }) => {
     }
   }
 
-  const onResolve = async () => {
+  const remove: MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.stopPropagation()
+    if (!window.confirm('정말 지웁니까?')) return
+    try {
+      await supabase.from<Table.Tasks>('tasks').delete().eq('id', id)
+      onUpdate()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const onResolve: MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.stopPropagation()
     try {
       await supabase
         .from<Table.Tasks>('tasks')
@@ -56,6 +76,11 @@ const Item: FC<Props> = ({ is_resolved, onUpdate, id, ...props }) => {
           { 'text-neutral-600': is_resolved }
         )}
       >
+        {isLoggedIn && (
+          <button onClick={remove}>
+            <XIcon className="mr-2 h-5 w-5 text-neutral-400 hover:text-neutral-50" />
+          </button>
+        )}
         <DebounceInput
           className="w-full flex-1 select-none truncate read-only:cursor-pointer"
           readOnly={is_resolved}
@@ -66,11 +91,8 @@ const Item: FC<Props> = ({ is_resolved, onUpdate, id, ...props }) => {
           debounceTimeout={1000}
           onChange={onChange}
         />
-        <span
-          onClick={(e) => {
-            e.stopPropagation()
-            onResolve()
-          }}
+        <button
+          onClick={onResolve}
           className={classnames(
             'h-5 w-5 rounded-full border border-neutral-700 duration-150',
             {
