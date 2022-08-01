@@ -9,7 +9,6 @@ export interface Props extends Table.Tasks {
   isLoggedIn: boolean
 }
 interface State {
-  isOpen: boolean
   title: string
   description: string
 }
@@ -21,12 +20,10 @@ const Item: FC<Props> = ({
   isLoggedIn,
   ...props
 }) => {
-  const [{ isOpen, description, title }, setState, onChange] =
-    useObjectState<State>({
-      isOpen: false,
-      description: props.description || '',
-      title: props.title
-    })
+  const [{ description, title }, setState, onChange] = useObjectState<State>({
+    description: props.description || '',
+    title: props.title
+  })
 
   const update = async () => {
     try {
@@ -70,7 +67,6 @@ const Item: FC<Props> = ({
   return (
     <div>
       <div
-        onClick={() => setState({ isOpen: !isOpen })}
         className={classnames(
           'flex cursor-pointer items-center p-2 duration-150 hover:bg-neutral-800 active:bg-neutral-700',
           { 'text-neutral-600': is_resolved }
@@ -87,6 +83,7 @@ const Item: FC<Props> = ({
           value={title}
           placeholder="타이틀 수정"
           spellCheck={false}
+          disabled={!isLoggedIn}
           name="title"
           debounceTimeout={1000}
           onChange={onChange}
@@ -102,22 +99,22 @@ const Item: FC<Props> = ({
           )}
         />
       </div>
-      {isOpen && (
-        <div className="mb-2 px-2">
-          <DebounceInput
-            value={description}
-            name="description"
-            className={classnames('w-full text-sm', {
-              'text-neutral-600': is_resolved
-            })}
-            placeholder="내용 수정"
-            readOnly={is_resolved}
-            onChange={onChange}
-            debounceTimeout={1000}
-            spellCheck={false}
-          />
-        </div>
-      )}
+      <div className="mb-2 px-2">
+        <DebounceInput
+          value={description}
+          name="description"
+          className={classnames(
+            'w-full rounded border border-transparent p-1 text-sm focus:border-neutral-600',
+            { 'text-neutral-600 placeholder:text-neutral-600': is_resolved }
+          )}
+          placeholder="내용"
+          readOnly={is_resolved}
+          onChange={onChange}
+          debounceTimeout={1000}
+          disabled={!isLoggedIn}
+          spellCheck={false}
+        />
+      </div>
     </div>
   )
 }
