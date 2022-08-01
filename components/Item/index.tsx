@@ -69,14 +69,9 @@ const Item: FC<Props> = ({
       <div
         className={classnames(
           'flex cursor-pointer items-center p-2 duration-150 hover:bg-neutral-800 active:bg-neutral-700',
-          { 'text-neutral-600': is_resolved }
+          { 'text-neutral-600': is_resolved, group: isLoggedIn }
         )}
       >
-        {isLoggedIn && (
-          <button onClick={remove}>
-            <XIcon className="mr-2 h-5 w-5 text-neutral-400 hover:text-neutral-50" />
-          </button>
-        )}
         <DebounceInput
           className="w-full flex-1 select-none truncate read-only:cursor-pointer"
           readOnly={is_resolved}
@@ -88,8 +83,17 @@ const Item: FC<Props> = ({
           debounceTimeout={1000}
           onChange={onChange}
         />
+        {isLoggedIn && (
+          <button
+            onClick={remove}
+            className="mr-2 hidden text-neutral-400 hover:text-neutral-50 group-hover:inline-block"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
+        )}
         <button
           onClick={onResolve}
+          disabled={!isLoggedIn}
           className={classnames(
             'h-5 w-5 rounded-full border border-neutral-700 duration-150',
             {
