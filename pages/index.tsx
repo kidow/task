@@ -4,7 +4,8 @@ import {
   ChevronLeftIcon,
   ChevronDoubleRightIcon,
   ChevronRightIcon,
-  PencilAltIcon
+  PencilAltIcon,
+  XIcon
 } from '@heroicons/react/outline'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -14,6 +15,7 @@ import { Modal } from 'containers'
 import { useEffect } from 'react'
 import type { User } from '@supabase/supabase-js'
 import jsCookie from 'js-cookie'
+import classnames from 'classnames'
 
 interface Props {
   user: User | null
@@ -27,6 +29,8 @@ interface State {
   list: Table.Tasks[]
   isLoading: boolean
   isLoggedIn: boolean
+  unresolvedList: Table.Tasks[]
+  isUnresolvedOpen: boolean
 }
 
 const HomePage: NextPage<Props> = ({ user }) => {
@@ -39,7 +43,9 @@ const HomePage: NextPage<Props> = ({ user }) => {
       currentDate,
       list,
       isLoading,
-      isLoggedIn
+      isLoggedIn,
+      unresolvedList,
+      isUnresolvedOpen
     },
     setState,
     onChange
@@ -51,7 +57,9 @@ const HomePage: NextPage<Props> = ({ user }) => {
     currentDate: dayjs().format('YYYY-MM-DD'),
     list: [],
     isLoading: true,
-    isLoggedIn: false
+    isLoggedIn: false,
+    unresolvedList: [],
+    isUnresolvedOpen: false
   })
 
   const get = async () => {
@@ -84,10 +92,25 @@ const HomePage: NextPage<Props> = ({ user }) => {
           .gt('created_at', new Date(currentDate).toISOString())
       ])
       setState({ list: [...(unresolved || []), ...(resolved || [])] })
+      getUnresolvedList()
     } catch (err) {
       console.error(err)
     } finally {
       setState({ isLoading: false })
+    }
+  }
+
+  const getUnresolvedList = async () => {
+    try {
+      const { data } = await supabase
+        .from<Table.Tasks>('tasks')
+        .select()
+        .eq('is_resolved', false)
+        .lt('created_at', new Date(dayjs().format('YYYY-MM-DD')).toISOString())
+        .order('created_at', { ascending: false })
+      setState({ unresolvedList: data || [] })
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -106,6 +129,10 @@ const HomePage: NextPage<Props> = ({ user }) => {
       setState({ isCreating: false })
     }
   }
+
+  useEffect(() => {
+    getUnresolvedList()
+  }, [])
 
   useEffect(() => {
     get()
@@ -182,7 +209,7 @@ const HomePage: NextPage<Props> = ({ user }) => {
               setState({
                 currentDate: dayjs(currentDate)
                   .add(1, 'month')
-                  .isAfter(dayjs(), 'month')
+                  .isAfter(dayjs(), 'day')
                   ? dayjs().format('YYYY-MM-DD')
                   : dayjs(currentDate).add(1, 'month').format('YYYY-MM-DD')
               })
@@ -260,6 +287,54 @@ const HomePage: NextPage<Props> = ({ user }) => {
             >
               구글로 로그인
             </button>
+          </div>
+        )}
+
+        {!!unresolvedList.length && (
+          <div className="fixed bottom-10 right-10 rounded-lg border border-red-400 bg-black p-2 duration-150">
+            <div
+              className={classnames('relative h-full w-full', {
+                'pb-4': isUnresolvedOpen
+              })}
+            >
+              {isUnresolvedOpen && (
+                <div className="space-y-1">
+                  {unresolvedList.map((item) => (
+                    <div key={item.id}>
+                      <div
+                        className="cursor-pointer hover:underline"
+                        onClick={() =>
+                          setState({
+                            currentDate: dayjs(item.created_at).format(
+                              'YYYY-MM-DD'
+                            )
+                          })
+                        }
+                      >
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {dayjs(item.created_at).format('YYYY-MM-DD')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() =>
+                  setState({ isUnresolvedOpen: !isUnresolvedOpen })
+                }
+                className={classnames('text-sm', {
+                  'absolute right-0 bottom-0': isUnresolvedOpen
+                })}
+              >
+                {isUnresolvedOpen ? (
+                  <XIcon className="h-4 w-4" />
+                ) : (
+                  `못 다한 테스크 ${unresolvedList.length}`
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
