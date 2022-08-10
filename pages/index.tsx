@@ -62,7 +62,7 @@ const HomePage: NextPage<Props> = ({ user }) => {
     isUnresolvedOpen: false
   })
 
-  const get = async () => {
+  const get = async (type?: 'today') => {
     setState({ isLoading: true })
     try {
       const [{ data: unresolved }, { data: resolved }] = await Promise.all([
@@ -93,6 +93,8 @@ const HomePage: NextPage<Props> = ({ user }) => {
       ])
       setState({ list: [...(unresolved || []), ...(resolved || [])] })
       getUnresolvedList()
+      if (type === 'today')
+        setState({ currentDate: dayjs().format('YYYY-MM-DD') })
     } catch (err) {
       console.error(err)
     } finally {
@@ -264,6 +266,7 @@ const HomePage: NextPage<Props> = ({ user }) => {
               key={item.id}
               onUpdate={get}
               isLoggedIn={isLoggedIn}
+              currentDate={currentDate}
               {...item}
             />
           ))}

@@ -2,11 +2,15 @@ import type { FC, MouseEventHandler } from 'react'
 import classnames from 'classnames'
 import { supabase, useComponentDidUpdate, useObjectState } from 'services'
 import { DebounceInput } from 'react-debounce-input'
-import { XIcon } from '@heroicons/react/outline'
+import { ReplyIcon, XIcon } from '@heroicons/react/outline'
+import isToday from 'dayjs/plugin/isToday'
+import dayjs from 'dayjs'
+dayjs.extend(isToday)
 
 export interface Props extends Table.Tasks {
-  onUpdate: () => void
+  onUpdate: (type?: 'today') => void
   isLoggedIn: boolean
+  currentDate: string
 }
 interface State {
   title: string
@@ -18,6 +22,7 @@ const Item: FC<Props> = ({
   onUpdate,
   id,
   isLoggedIn,
+  currentDate,
   ...props
 }) => {
   const [{ description, title }, setState, onChange] = useObjectState<State>({
@@ -61,6 +66,20 @@ const Item: FC<Props> = ({
     }
   }
 
+  const onMoveToday: MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.stopPropagation()
+    if (!window.confirm('오늘 테스크로 옮기겠습니까?')) return
+    try {
+      await supabase
+        .from<Table.Tasks>('tasks')
+        .update({ created_at: new Date().toISOString() })
+        .eq('id', id)
+      onUpdate('today')
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   useComponentDidUpdate(() => {
     update()
   }, [title, description])
@@ -83,6 +102,14 @@ const Item: FC<Props> = ({
           debounceTimeout={1000}
           onChange={onChange}
         />
+        {!dayjs(currentDate).isToday() && isLoggedIn && (
+          <button
+            onClick={onMoveToday}
+            className="mr-2 hidden text-neutral-400 hover:text-neutral-500 group-hover:inline-block"
+          >
+            <ReplyIcon className="h-5 w-5" />
+          </button>
+        )}
         {isLoggedIn && (
           <button
             onClick={remove}
